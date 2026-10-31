@@ -36,22 +36,34 @@ export class UsersService {
     private readonly workSchedulesService: WorkSchedulesService,
   ) {}
 
-  async findAll(search?: string) {
+  async findAll(search?: string, page = 1, pageSize = 10) {
     const normalizedSearch = search?.trim();
+    const where = normalizedSearch
+      ? {
+          OR: [
+            { name: { contains: normalizedSearch } },
+            { email: { contains: normalizedSearch } },
+          ],
+        }
+      : undefined;
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.user.findMany({
+        where,
+        select: userSelect,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.user.count({ where }),
+    ]);
 
-    return this.prisma.user.findMany({
-      where: normalizedSearch
-        ? {
-            OR: [
-              { name: { contains: normalizedSearch } },
-              { email: { contains: normalizedSearch } },
-            ],
-          }
-
-        : undefined,
-      select: userSelect,
-      orderBy: { createdAt: 'desc' },
-    });
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
   }
 
   async findOne(id: string) {

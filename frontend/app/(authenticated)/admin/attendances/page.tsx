@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import DateRangePicker from "../date-range-picker";
 
 type Employee = { id: string; name: string; email: string };
 type Attendance = {
@@ -37,6 +38,13 @@ export default function AttendancesPage() {
   const router = useRouter();
   const [records, setRecords] = useState<Attendance[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageInput, setPageInput] = useState("1");
+  const [totalPages, setTotalPages] = useState(1);
   const [form, setForm] = useState(emptyForm);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,20 +52,44 @@ export default function AttendancesPage() {
   const [error, setError] = useState("");
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
+  function applyPageInput() {
+    const requestedPage = Number(pageInput);
+    if (
+      Number.isInteger(requestedPage) &&
+      requestedPage >= 1 &&
+      requestedPage <= totalPages
+    ) {
+      setPage(requestedPage);
+      setPageInput(String(requestedPage));
+      return;
+    }
+
+    setPageInput(String(page));
+  }
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedSearch(search), 350);
+    return () => window.clearTimeout(timer);
+  }, [search]);
+
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
       const [attendanceResponse, employeeResponse] = await Promise.all([
-        fetch(`${apiUrl}/attendances`, { credentials: "include" }),
-        fetch(`${apiUrl}/users`, { credentials: "include" }),
+        fetch(
+          `${apiUrl}/attendances?search=${encodeURIComponent(debouncedSearch)}&startDate=${encodeURIComponent(startDate ? new Date(`${startDate}T00:00:00`).toISOString() : "")}&endDate=${encodeURIComponent(endDate ? new Date(new Date(`${endDate}T00:00:00`).getTime() + 86400000).toISOString() : "")}&page=${page}&pageSize=10`,
+          { credentials: "include" },
+        ),
+        fetch(`${apiUrl}/users?page=1&pageSize=100`, { credentials: "include" }),
       ]);
       const attendanceResult = await attendanceResponse.json();
       const employeeResult = await employeeResponse.json();
       if (!attendanceResponse.ok || !employeeResponse.ok) {
         throw new Error("Unable to load attendance data");
       }
-      setRecords(attendanceResult);
-      setEmployees(employeeResult);
+      setRecords(attendanceResult.items);
+      setTotalPages(attendanceResult.totalPages);
+      setEmployees(employeeResult.items);
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -67,7 +99,7 @@ export default function AttendancesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [apiUrl]);
+  }, [apiUrl, debouncedSearch, endDate, page, startDate]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => void loadData(), 0);
@@ -151,6 +183,29 @@ export default function AttendancesPage() {
       )}
 
       <div className="mt-8 rounded-2xl border border-red-100 bg-white p-5 shadow-sm">
+        <div className="grid gap-3 md:grid-cols-[1.2fr_1fr]">
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(1);
+              setPageInput("1");
+            }}
+            placeholder="Search by employee name or email..."
+            className="h-11 rounded-xl border border-zinc-200 bg-zinc-50 px-4 text-sm text-zinc-950 outline-none placeholder:text-zinc-500 focus:border-red-500 focus:bg-white focus:ring-4 focus:ring-red-100"
+          />
+          <DateRangePicker
+            startDate={startDate}
+            endDate={endDate}
+            onChange={(nextStartDate, nextEndDate) => {
+              setStartDate(nextStartDate);
+              setEndDate(nextEndDate);
+              setPage(1);
+              setPageInput("1");
+            }}
+          />
+        </div>
         {isLoading ? (
           <p className="py-8 text-center text-sm text-zinc-500">
             Loading attendances...
@@ -210,6 +265,55 @@ export default function AttendancesPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+        {totalPages > 1 && (
+          <div className="mt-5 flex items-center justify-between border-t border-zinc-100 pt-4 text-sm">
+            <p className="text-zinc-500">
+              Page {page} of {totalPages}
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={page === 1}
+                onClick={() => {
+                  const nextPage = page - 1;
+                  setPage(nextPage);
+                  setPageInput(String(nextPage));
+                }}
+                className="rounded-lg border border-zinc-200 px-3 py-2 text-zinc-700 disabled:opacity-40"
+              >
+                Previous
+              </button>
+              <input
+                type="number"
+                min={1}
+                max={totalPages}
+                value={pageInput}
+                onChange={(event) => setPageInput(event.target.value)}
+                onBlur={applyPageInput}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    applyPageInput();
+                  }
+                }}
+                aria-label="Jump to page"
+                className="h-10 w-16 rounded-lg border border-zinc-200 px-2 text-center text-zinc-700"
+              />
+              <button
+                type="button"
+                disabled={page === totalPages}
+                onClick={() => {
+                  const nextPage = page + 1;
+                  setPage(nextPage);
+                  setPageInput(String(nextPage));
+                }}
+                className="rounded-lg border border-zinc-200 px-3 py-2 text-zinc-700 disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
           </div>
         )}
       </div>

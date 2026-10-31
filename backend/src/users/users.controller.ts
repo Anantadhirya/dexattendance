@@ -25,8 +25,17 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  findAll(@Query('search') search?: string) {
-    return this.usersService.findAll(search);
+  findAll(
+    @Query('search') search?: string,
+    @Query('page') pageValue?: string,
+    @Query('pageSize') pageSizeValue?: string,
+  ) {
+    const page = Math.max(1, Number.parseInt(pageValue ?? '1', 10) || 1);
+    const pageSize = Math.min(
+      100,
+      Math.max(1, Number.parseInt(pageSizeValue ?? '10', 10) || 10),
+    );
+    return this.usersService.findAll(search, page, pageSize);
   }
 
   @Get(':id')

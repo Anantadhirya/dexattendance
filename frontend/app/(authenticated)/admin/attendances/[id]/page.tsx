@@ -52,7 +52,7 @@ export default function AttendanceDetailPage() {
         throw new Error(recordResult.message ?? "Unable to load attendance");
       }
       setRecord(recordResult);
-      setEmployees(employeeResult);
+      setEmployees(employeeResult.items);
       setForm({
         userId: recordResult.userId,
         type: recordResult.type,

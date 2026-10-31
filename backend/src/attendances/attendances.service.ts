@@ -76,14 +76,44 @@ function serializeAttendance(attendance: {
 export class AttendancesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(startDate?: string, endDate?: string) {
-    const records = await this.prisma.attendanceRecord.findMany({
-      where: this.dateRange(startDate, endDate),
-      select: attendanceSelect,
-      orderBy: { timestamp: 'desc' },
-    });
+  async findAll(
+    search?: string,
+    startDate?: string,
+    endDate?: string,
+    page = 1,
+    pageSize = 10,
+  ) {
+    const dateWhere = this.dateRange(startDate, endDate);
+    const normalizedSearch = search?.trim();
+    const where: Prisma.AttendanceRecordWhereInput = {
+      ...dateWhere,
+      user: normalizedSearch
+        ? {
+            OR: [
+              { name: { contains: normalizedSearch } },
+              { email: { contains: normalizedSearch } },
+            ],
+          }
+        : undefined,
+    };
+    const [records, total] = await this.prisma.$transaction([
+      this.prisma.attendanceRecord.findMany({
+        where,
+        select: attendanceSelect,
+        orderBy: { timestamp: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.attendanceRecord.count({ where }),
+    ]);
 
-    return records.map(serializeAttendance);
+    return {
+      items: records.map(serializeAttendance),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
   }
 
   async findOne(id: string) {

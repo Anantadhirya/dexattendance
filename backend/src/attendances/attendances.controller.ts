@@ -21,8 +21,25 @@ export class AttendancesController {
   constructor(private readonly attendancesService: AttendancesService) {}
 
   @Get()
-  findAll(@Query('startDate') startDate?: string, @Query('endDate') endDate?: string) {
-    return this.attendancesService.findAll(startDate, endDate);
+  findAll(
+    @Query('search') search?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('page') pageValue?: string,
+    @Query('pageSize') pageSizeValue?: string,
+  ) {
+    const page = Math.max(1, Number.parseInt(pageValue ?? '1', 10) || 1);
+    const pageSize = Math.min(
+      100,
+      Math.max(1, Number.parseInt(pageSizeValue ?? '10', 10) || 10),
+    );
+    return this.attendancesService.findAll(
+      search,
+      startDate,
+      endDate,
+      page,
+      pageSize,
+    );
   }
 
   @Get('user/:userId')

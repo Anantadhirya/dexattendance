@@ -4,7 +4,6 @@ import {
   FormEvent,
   useCallback,
   useEffect,
-  useMemo,
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
@@ -83,6 +82,10 @@ export default function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageInput, setPageInput] = useState("1");
+  const [totalPages, setTotalPages] = useState(1);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -92,11 +95,29 @@ export default function EmployeesPage() {
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
+  function applyPageInput() {
+    const requestedPage = Number(pageInput);
+    if (
+      Number.isInteger(requestedPage) &&
+      requestedPage >= 1 &&
+      requestedPage <= totalPages
+    ) {
+      setPage(requestedPage);
+      setPageInput(String(requestedPage));
+      return;
+    }
+
+    setPageInput(String(page));
+  }
+
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
       const [employeesResponse, schedulesResponse] = await Promise.all([
-        fetch(`${apiUrl}/users`, { credentials: "include" }),
+        fetch(
+          `${apiUrl}/users?search=${encodeURIComponent(debouncedSearch)}&page=${page}&pageSize=10`,
+          { credentials: "include" },
+        ),
         fetch(`${apiUrl}/work-schedules`, { credentials: "include" }),
       ]);
 
@@ -104,7 +125,9 @@ export default function EmployeesPage() {
         throw new Error("Unable to load employee data");
       }
 
-      setEmployees(await employeesResponse.json());
+      const employeeResult = await employeesResponse.json();
+      setEmployees(employeeResult.items);
+      setTotalPages(employeeResult.totalPages);
       setSchedules(await schedulesResponse.json());
     } catch (requestError) {
       setError(
@@ -115,22 +138,17 @@ export default function EmployeesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [apiUrl]);
+  }, [apiUrl, debouncedSearch, page]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedSearch(search), 350);
+    return () => window.clearTimeout(timer);
+  }, [search]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => void loadData(), 0);
     return () => window.clearTimeout(timer);
   }, [loadData]);
-
-  const filteredEmployees = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return employees;
-    return employees.filter(
-      (employee) =>
-        employee.name.toLowerCase().includes(query) ||
-        employee.email.toLowerCase().includes(query),
-    );
-  }, [employees, search]);
 
   function openCreateForm() {
     setEditingId(null);
@@ -264,14 +282,18 @@ export default function EmployeesPage() {
         <input
           type="search"
           value={search}
-          onChange={(event) => setSearch(event.target.value)}
+          onChange={(event) => {
+            setSearch(event.target.value);
+            setPage(1);
+            setPageInput("1");
+          }}
           placeholder="Search by name or email..."
           className="h-11 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 text-sm text-zinc-950 outline-none placeholder:text-zinc-500 focus:border-red-500 focus:bg-white focus:ring-4 focus:ring-red-100"
         />
         <div className="mt-5 overflow-x-auto">
           {isLoading ? (
             <p className="py-8 text-center text-sm text-zinc-500">Loading employees...</p>
-          ) : filteredEmployees.length === 0 ? (
+          ) : employees.length === 0 ? (
             <p className="py-8 text-center text-sm text-zinc-500">No employees found.</p>
           ) : (
             <table className="w-full min-w-[700px] text-left text-sm">
@@ -285,7 +307,7 @@ export default function EmployeesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
-                {filteredEmployees.map((employee) => (
+                {employees.map((employee) => (
                   <tr
                     key={employee.id}
                     tabIndex={0}
@@ -361,6 +383,55 @@ export default function EmployeesPage() {
             </table>
           )}
         </div>
+        {totalPages > 1 && (
+          <div className="mt-5 flex items-center justify-between border-t border-zinc-100 pt-4 text-sm">
+            <p className="text-zinc-500">
+              Page {page} of {totalPages}
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={page === 1}
+                onClick={() => {
+                  const nextPage = page - 1;
+                  setPage(nextPage);
+                  setPageInput(String(nextPage));
+                }}
+                className="rounded-lg border border-zinc-200 px-3 py-2 text-zinc-700 disabled:opacity-40"
+              >
+                Previous
+              </button>
+              <input
+                type="number"
+                min={1}
+                max={totalPages}
+                value={pageInput}
+                onChange={(event) => setPageInput(event.target.value)}
+                onBlur={applyPageInput}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    applyPageInput();
+                  }
+                }}
+                aria-label="Jump to page"
+                className="h-10 w-16 rounded-lg border border-zinc-200 px-2 text-center text-zinc-700"
+              />
+              <button
+                type="button"
+                disabled={page === totalPages}
+                onClick={() => {
+                  const nextPage = page + 1;
+                  setPage(nextPage);
+                  setPageInput(String(nextPage));
+                }}
+                className="rounded-lg border border-zinc-200 px-3 py-2 text-zinc-700 disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {isFormOpen && (
