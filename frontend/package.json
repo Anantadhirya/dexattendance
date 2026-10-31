@@ -15,9 +15,11 @@
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
+    "@types/aws-lambda": "^8.10.164",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/ws": "^8.18.2",
     "eslint": "^9",
     "eslint-config-next": "16.4.3",
     "tailwindcss": "^4",
