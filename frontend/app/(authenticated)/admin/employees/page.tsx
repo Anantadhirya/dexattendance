@@ -1,13 +1,9 @@
 "use client";
 
-import {
-  FormEvent,
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import ConfirmationDialog from "../../../../components/confirmation-dialog";
 
 type Schedule = {
   id: string;
@@ -91,6 +87,9 @@ export default function EmployeesPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(
+    null,
+  );
   const [error, setError] = useState("");
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
@@ -201,7 +200,7 @@ export default function EmployeesPage() {
         throw new Error(
           Array.isArray(result.message)
             ? result.message.join(", ")
-            : result.message ?? "Unable to save employee",
+            : (result.message ?? "Unable to save employee"),
         );
       }
 
@@ -219,14 +218,6 @@ export default function EmployeesPage() {
   }
 
   async function deleteEmployee(employee: Employee) {
-    if (
-      !window.confirm(
-        `Delete ${employee.name}? This cannot be undone.`,
-      )
-    ) {
-      return;
-    }
-
     setError("");
     try {
       const response = await fetch(`${apiUrl}/users/${employee.id}`, {
@@ -240,6 +231,7 @@ export default function EmployeesPage() {
       setEmployees((current) =>
         current.filter((item) => item.id !== employee.id),
       );
+      setEmployeeToDelete(null);
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -273,7 +265,10 @@ export default function EmployeesPage() {
       </div>
 
       {error && (
-        <p role="alert" className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p
+          role="alert"
+          className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
           {error}
         </p>
       )}
@@ -292,9 +287,13 @@ export default function EmployeesPage() {
         />
         <div className="mt-5 overflow-x-auto">
           {isLoading ? (
-            <p className="py-8 text-center text-sm text-zinc-500">Loading employees...</p>
+            <p className="py-8 text-center text-sm text-zinc-500">
+              Loading employees...
+            </p>
           ) : employees.length === 0 ? (
-            <p className="py-8 text-center text-sm text-zinc-500">No employees found.</p>
+            <p className="py-8 text-center text-sm text-zinc-500">
+              No employees found.
+            </p>
           ) : (
             <table className="w-full min-w-[700px] text-left text-sm">
               <thead className="border-b border-zinc-100 text-xs uppercase tracking-wide text-zinc-400">
@@ -303,7 +302,9 @@ export default function EmployeesPage() {
                   <th className="px-3 py-3 font-semibold">Status</th>
                   <th className="px-3 py-3 font-semibold">Role</th>
                   <th className="px-3 py-3 font-semibold">Schedule</th>
-                  <th className="px-3 py-3 text-right font-semibold">Actions</th>
+                  <th className="px-3 py-3 text-right font-semibold">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
@@ -312,7 +313,9 @@ export default function EmployeesPage() {
                     key={employee.id}
                     tabIndex={0}
                     role="link"
-                    onClick={() => router.push(`/admin/employees/${employee.id}`)}
+                    onClick={() =>
+                      router.push(`/admin/employees/${employee.id}`)
+                    }
                     onKeyDown={(event) => {
                       if (event.key === "Enter" || event.key === " ") {
                         event.preventDefault();
@@ -328,7 +331,9 @@ export default function EmployeesPage() {
                       <p className="mt-1 text-zinc-700">{employee.email}</p>
                     </td>
                     <td className="px-3 py-4">
-                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${employee.isActive ? "bg-green-50 text-green-700" : "bg-zinc-100 text-zinc-500"}`}>
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${employee.isActive ? "bg-green-50 text-green-700" : "bg-zinc-100 text-zinc-500"}`}
+                      >
                         {employee.isActive ? "Active" : "Inactive"}
                       </span>
                     </td>
@@ -363,16 +368,16 @@ export default function EmployeesPage() {
                         onClick={() => openEditForm(employee)}
                         aria-label={`Edit ${employee.name}`}
                         title="Edit employee"
-                        className="rounded-lg p-2 text-red-700 hover:bg-red-50 hover:text-red-900"
+                        className="rounded-lg p-2 text-red-700 hover:bg-red-100 hover:text-red-900"
                       >
                         <FiEdit2 aria-hidden="true" />
                       </button>
                       <button
                         type="button"
-                        onClick={() => void deleteEmployee(employee)}
+                        onClick={() => setEmployeeToDelete(employee)}
                         aria-label={`Delete ${employee.name}`}
                         title="Delete employee"
-                        className="ml-2 rounded-lg p-2 text-zinc-500 hover:bg-red-50 hover:text-red-700"
+                        className="ml-2 rounded-lg p-2 text-zinc-500 hover:bg-red-100 hover:text-red-700"
                       >
                         <FiTrash2 aria-hidden="true" />
                       </button>
@@ -432,31 +437,92 @@ export default function EmployeesPage() {
             </div>
           </div>
         )}
+        {employeeToDelete && (
+          <ConfirmationDialog
+            title="Delete employee?"
+            message={`Delete ${employeeToDelete.name}? This cannot be undone.`}
+            confirmLabel="Delete"
+            onCancel={() => setEmployeeToDelete(null)}
+            onConfirm={() => void deleteEmployee(employeeToDelete)}
+          />
+        )}
       </div>
 
       {isFormOpen && (
         <div className="fixed inset-0 z-20 flex items-center justify-center bg-red-950/30 p-5 backdrop-blur-sm">
-          <form onSubmit={saveEmployee} className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+          <form
+            onSubmit={saveEmployee}
+            className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl"
+          >
             <div className="flex items-start justify-between">
               <div>
                 <h2 className="text-2xl font-semibold text-red-950">
                   {editingId ? "Edit employee" : "Add employee"}
                 </h2>
                 <p className="mt-1 text-sm text-zinc-500">
-                  {editingId ? "Update employee access and schedule." : "Set access and schedule for the new employee."}
+                  {editingId
+                    ? "Update employee access and schedule."
+                    : "Set access and schedule for the new employee."}
                 </p>
               </div>
-              <button type="button" onClick={() => setIsFormOpen(false)} className="text-2xl text-zinc-400 hover:text-zinc-700" aria-label="Close">
+              <button
+                type="button"
+                onClick={() => setIsFormOpen(false)}
+                className="text-2xl text-zinc-400 hover:text-zinc-700"
+                aria-label="Close"
+              >
                 &times;
               </button>
             </div>
             <div className="mt-6 space-y-4">
-              <input required minLength={2} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Full name" className="h-11 w-full rounded-xl border border-zinc-200 px-4 text-sm text-zinc-950 outline-none placeholder:text-zinc-500 focus:border-red-500 focus:ring-4 focus:ring-red-100" />
-              <input required type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} placeholder="Email address" className="h-11 w-full rounded-xl border border-zinc-200 px-4 text-sm text-zinc-950 outline-none placeholder:text-zinc-500 focus:border-red-500 focus:ring-4 focus:ring-red-100" />
-              <input required={!editingId} minLength={8} type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} placeholder={editingId ? "New password (optional)" : "Temporary password"} className="h-11 w-full rounded-xl border border-zinc-200 px-4 text-sm text-zinc-950 outline-none placeholder:text-zinc-500 focus:border-red-500 focus:ring-4 focus:ring-red-100" />
-              <select value={form.workScheduleId} onChange={(event) => setForm({ ...form, workScheduleId: event.target.value })} className="h-11 w-full rounded-xl border border-zinc-200 bg-white px-4 text-sm text-zinc-950 outline-none focus:border-red-500 focus:ring-4 focus:ring-red-100">
-                <option value="" className="text-zinc-700">No work schedule</option>
-                {schedules.map((schedule) => <option key={schedule.id} value={schedule.id}>{schedule.name}</option>)}
+              <input
+                required
+                minLength={2}
+                value={form.name}
+                onChange={(event) =>
+                  setForm({ ...form, name: event.target.value })
+                }
+                placeholder="Full name"
+                className="h-11 w-full rounded-xl border border-zinc-200 px-4 text-sm text-zinc-950 outline-none placeholder:text-zinc-500 focus:border-red-500 focus:ring-4 focus:ring-red-100"
+              />
+              <input
+                required
+                type="email"
+                value={form.email}
+                onChange={(event) =>
+                  setForm({ ...form, email: event.target.value })
+                }
+                placeholder="Email address"
+                className="h-11 w-full rounded-xl border border-zinc-200 px-4 text-sm text-zinc-950 outline-none placeholder:text-zinc-500 focus:border-red-500 focus:ring-4 focus:ring-red-100"
+              />
+              <input
+                required={!editingId}
+                minLength={8}
+                type="password"
+                value={form.password}
+                onChange={(event) =>
+                  setForm({ ...form, password: event.target.value })
+                }
+                placeholder={
+                  editingId ? "New password (optional)" : "Temporary password"
+                }
+                className="h-11 w-full rounded-xl border border-zinc-200 px-4 text-sm text-zinc-950 outline-none placeholder:text-zinc-500 focus:border-red-500 focus:ring-4 focus:ring-red-100"
+              />
+              <select
+                value={form.workScheduleId}
+                onChange={(event) =>
+                  setForm({ ...form, workScheduleId: event.target.value })
+                }
+                className="h-11 w-full rounded-xl border border-zinc-200 bg-white px-4 text-sm text-zinc-950 outline-none focus:border-red-500 focus:ring-4 focus:ring-red-100"
+              >
+                <option value="" className="text-zinc-700">
+                  No work schedule
+                </option>
+                {schedules.map((schedule) => (
+                  <option key={schedule.id} value={schedule.id}>
+                    {schedule.name}
+                  </option>
+                ))}
               </select>
               <div className="space-y-3 rounded-xl bg-zinc-50 p-4">
                 <Toggle
@@ -473,7 +539,11 @@ export default function EmployeesPage() {
                 )}
               </div>
             </div>
-            <button disabled={isSaving} type="submit" className="mt-6 h-11 w-full rounded-xl bg-red-700 text-sm font-semibold text-white hover:bg-red-800 disabled:opacity-60">
+            <button
+              disabled={isSaving}
+              type="submit"
+              className="mt-6 h-11 w-full rounded-xl bg-red-700 text-sm font-semibold text-white hover:bg-red-800 disabled:opacity-60"
+            >
               {isSaving ? "Saving..." : "Save employee"}
             </button>
           </form>

@@ -1,4 +1,4 @@
-import AttendanceHistory from "../attendance-history";
+import AttendanceHistory from "../../../components/attendance-history";
 
 export default function AttendancePage() {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";

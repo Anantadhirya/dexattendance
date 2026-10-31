@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { FiArrowLeft, FiSave, FiTrash2 } from "react-icons/fi";
 import { useParams, useRouter } from "next/navigation";
+import ConfirmationDialog from "../../../../../components/confirmation-dialog";
 
 type Employee = { id: string; name: string; email: string };
 type Attendance = {
@@ -37,6 +38,7 @@ export default function AttendanceDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
   const loadData = useCallback(async () => {
@@ -125,7 +127,7 @@ export default function AttendanceDetailPage() {
   }
 
   async function deleteAttendance() {
-    if (!record || !window.confirm("Delete this attendance record?")) return;
+    if (!record) return;
     setError("");
     try {
       const response = await fetch(`${apiUrl}/attendances/${record.id}`, {
@@ -134,6 +136,7 @@ export default function AttendanceDetailPage() {
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.message ?? "Unable to delete attendance");
+      setIsDeleteDialogOpen(false);
       router.replace("/admin/attendances");
     } catch (requestError) {
       setError(
@@ -186,12 +189,21 @@ export default function AttendanceDetailPage() {
         </div>
         <button
           type="button"
-          onClick={() => void deleteAttendance()}
+          onClick={() => setIsDeleteDialogOpen(true)}
           className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 px-5 py-3 text-sm font-semibold text-red-700 hover:bg-red-50"
         >
           <FiTrash2 aria-hidden="true" /> Delete
         </button>
       </div>
+      {isDeleteDialogOpen && (
+        <ConfirmationDialog
+          title="Delete attendance record?"
+          message="Delete this attendance record? This cannot be undone."
+          confirmLabel="Delete"
+          onCancel={() => setIsDeleteDialogOpen(false)}
+          onConfirm={() => void deleteAttendance()}
+        />
+      )}
 
       {error && (
         <p role="alert" className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">

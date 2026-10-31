@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FiCamera, FiCheckCircle, FiClock, FiMapPin } from "react-icons/fi";
-import CameraDialog from "./camera-dialog";
-import LoadingOverlay from "./loading-overlay";
+import CameraDialog from "../../components/camera-dialog";
+import ConfirmationDialog from "../../components/confirmation-dialog";
+import LoadingOverlay from "../../components/loading-overlay";
 import { useUser } from "./user-provider";
 
 type Attendance = {
@@ -78,6 +79,7 @@ export default function DashboardPage() {
   const [records, setRecords] = useState<Attendance[]>([]);
   const [capturedImage, setCapturedImage] = useState<File | null>(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -280,7 +282,7 @@ export default function DashboardPage() {
           <button
             type="button"
             disabled={isLoading || isSubmitting || !action}
-            onClick={() => void submitAttendance()}
+            onClick={() => setIsConfirmationOpen(true)}
             className="mt-7 h-12 w-full rounded-xl bg-red-700 text-sm font-semibold text-white shadow-lg shadow-red-700/20 hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSubmitting ? "Recording..." : actionLabel}
@@ -294,6 +296,18 @@ export default function DashboardPage() {
           onCapture={(file) => {
             setCapturedImage(file);
             setIsCameraOpen(false);
+          }}
+        />
+      )}
+      {isConfirmationOpen && action && (
+        <ConfirmationDialog
+          title={`${action === "check_in" ? "Check in" : "Check out"} now?`}
+          message={`Confirm that you want to ${action === "check_in" ? "check in" : "check out"} now. Your current location will be captured.`}
+          confirmLabel={action === "check_in" ? "Check in" : "Check out"}
+          onCancel={() => setIsConfirmationOpen(false)}
+          onConfirm={() => {
+            setIsConfirmationOpen(false);
+            void submitAttendance();
           }}
         />
       )}

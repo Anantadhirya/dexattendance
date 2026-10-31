@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import ConfirmationDialog from "../../../../components/confirmation-dialog";
 
 type Schedule = {
   id: string;
@@ -31,6 +32,7 @@ export default function SchedulesPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [scheduleToDelete, setScheduleToDelete] = useState<Schedule | null>(null);
   const [error, setError] = useState("");
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
@@ -122,14 +124,6 @@ export default function SchedulesPage() {
   }
 
   async function deleteSchedule(schedule: Schedule) {
-    if (
-      !window.confirm(
-        `Delete ${schedule.name}? Employees assigned to it will become unassigned.`,
-      )
-    ) {
-      return;
-    }
-
     setError("");
     try {
       const response = await fetch(`${apiUrl}/work-schedules/${schedule.id}`, {
@@ -143,6 +137,7 @@ export default function SchedulesPage() {
       setSchedules((current) =>
         current.filter((item) => item.id !== schedule.id),
       );
+      setScheduleToDelete(null);
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -226,7 +221,7 @@ export default function SchedulesPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => void deleteSchedule(schedule)}
+                        onClick={() => setScheduleToDelete(schedule)}
                         aria-label={`Delete ${schedule.name}`}
                         title="Delete schedule"
                         className="ml-2 rounded-lg p-2 text-zinc-500 hover:bg-red-50 hover:text-red-700"
@@ -330,6 +325,15 @@ export default function SchedulesPage() {
             </button>
           </form>
         </div>
+      )}
+      {scheduleToDelete && (
+        <ConfirmationDialog
+          title="Delete work schedule?"
+          message={`Delete ${scheduleToDelete.name}? Employees assigned to it will become unassigned.`}
+          confirmLabel="Delete"
+          onCancel={() => setScheduleToDelete(null)}
+          onConfirm={() => void deleteSchedule(scheduleToDelete)}
+        />
       )}
     </section>
   );

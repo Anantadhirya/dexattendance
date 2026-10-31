@@ -2,7 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import DateRangePicker from "../date-range-picker";
+import DateRangePicker from "../../../../components/date-range-picker";
 
 type Employee = { id: string; name: string; email: string };
 type Attendance = {

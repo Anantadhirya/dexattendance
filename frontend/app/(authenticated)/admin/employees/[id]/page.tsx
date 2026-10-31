@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { FiArrowLeft } from "react-icons/fi";
-import AttendanceHistory from "../../../attendance-history";
+import AttendanceHistory from "../../../../../components/attendance-history";
 
 type Employee = { id: string; name: string; email: string };
 
