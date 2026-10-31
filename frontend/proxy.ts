@@ -5,6 +5,9 @@ export function proxy(request: NextRequest) {
   const hasSession = request.cookies.has("dexattendance_token");
   const isUnauthenticatedRoute = request.nextUrl.pathname.startsWith("/sign-in");
 
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", request.nextUrl.pathname);
+
   if (isUnauthenticatedRoute && hasSession) {
     return NextResponse.redirect(new URL("/", request.url));
   }
@@ -13,7 +16,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
 
-  return NextResponse.next();
+  return NextResponse.next({ request: { headers: requestHeaders } });
 }
 
 export const config = {

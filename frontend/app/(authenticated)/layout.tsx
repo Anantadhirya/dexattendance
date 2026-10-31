@@ -1,46 +1,47 @@
-"use client";
+import { cookies, headers } from "next/headers";
+import { notFound, redirect } from "next/navigation";
+import AuthenticatedShell from "./authenticated-shell";
+import { UserProvider, type CurrentUser } from "./user-provider";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+async function getCurrentUser(): Promise<CurrentUser> {
+  const token = (await cookies()).get("dexattendance_token")?.value;
 
-export default function AuthenticatedLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  const router = useRouter();
+  if (!token) {
+    redirect("/sign-in");
+  }
 
-  async function logout() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-    await fetch(`${apiUrl}/auth/logout`, {
-      method: "POST",
-      credentials: "include",
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+  let response: Response;
+
+  try {
+    response = await fetch(`${apiUrl}/auth/me`, {
+      headers: { Cookie: `dexattendance_token=${encodeURIComponent(token)}` },
+      cache: "no-store",
     });
-    router.replace("/sign-in");
+  } catch {
+    redirect("/sign-in");
+  }
+
+  if (!response.ok) {
+    redirect("/sign-in");
+  }
+
+  return response.json();
+}
+
+export default async function AuthenticatedLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
+  const user = await getCurrentUser();
+  const pathname = (await headers()).get("x-pathname") ?? "";
+
+  if (pathname.startsWith("/admin") && !user.isAdmin) {
+    notFound();
   }
 
   return (
-    <div className="min-h-screen bg-red-50">
-      <header className="border-b border-red-100 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-700 text-lg font-black text-white">
-              d
-            </span>
-            <span className="font-semibold tracking-tight text-red-950">
-              dexattendance
-            </span>
-          </Link>
-          <button
-            type="button"
-            onClick={logout}
-            className="text-sm font-semibold text-red-700 hover:text-red-900"
-          >
-            Log out
-          </button>
-        </div>
-      </header>
-      {children}
-    </div>
+    <UserProvider user={user}>
+      <AuthenticatedShell>{children}</AuthenticatedShell>
+    </UserProvider>
   );
 }

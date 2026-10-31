@@ -22,7 +22,9 @@ export default function SignInPage() {
     setIsSubmitting(true);
 
     const formData = new FormData(event.currentTarget);
-    const payload = Object.fromEntries(formData.entries());
+    const payload: Record<string, unknown> = Object.fromEntries(
+      formData.entries(),
+    );
     if (isSignIn) {
       payload.rememberMe = formData.get("remember") === "on";
       delete payload.remember;
