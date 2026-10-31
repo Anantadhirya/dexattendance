@@ -7,6 +7,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { useRouter } from "next/navigation";
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
 
 type Schedule = {
@@ -78,6 +79,7 @@ function Toggle({
 }
 
 export default function EmployeesPage() {
+  const router = useRouter();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [search, setSearch] = useState("");
@@ -284,9 +286,23 @@ export default function EmployeesPage() {
               </thead>
               <tbody className="divide-y divide-zinc-100">
                 {filteredEmployees.map((employee) => (
-                  <tr key={employee.id}>
+                  <tr
+                    key={employee.id}
+                    tabIndex={0}
+                    role="link"
+                    onClick={() => router.push(`/admin/employees/${employee.id}`)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        router.push(`/admin/employees/${employee.id}`);
+                      }
+                    }}
+                    className="cursor-pointer outline-none hover:bg-red-50 focus:bg-red-50"
+                  >
                     <td className="px-3 py-4">
-                      <p className="font-semibold text-zinc-950">{employee.name}</p>
+                      <p className="font-semibold text-zinc-950">
+                        {employee.name}
+                      </p>
                       <p className="mt-1 text-zinc-700">{employee.email}</p>
                     </td>
                     <td className="px-3 py-4">
@@ -316,7 +332,10 @@ export default function EmployeesPage() {
                         </span>
                       )}
                     </td>
-                    <td className="px-3 py-4 text-right">
+                    <td
+                      className="px-3 py-4 text-right"
+                      onClick={(event) => event.stopPropagation()}
+                    >
                       <button
                         type="button"
                         onClick={() => openEditForm(employee)}

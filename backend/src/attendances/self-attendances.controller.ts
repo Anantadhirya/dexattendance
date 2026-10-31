@@ -23,6 +23,19 @@ export class SelfAttendancesController {
     );
   }
 
+  @Get()
+  findAll(
+    @Req() request: AuthenticatedRequest,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.attendancesService.findForUser(
+      request.userId,
+      startDate,
+      endDate,
+    );
+  }
+
   @Post()
   create(
     @Req() request: AuthenticatedRequest,

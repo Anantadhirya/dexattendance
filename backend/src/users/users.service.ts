@@ -47,10 +47,24 @@ export class UsersService {
               { email: { contains: normalizedSearch } },
             ],
           }
+
         : undefined,
       select: userSelect,
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  async findOne(id: string) {
+    const employee = await this.prisma.user.findUnique({
+      where: { id },
+      select: userSelect,
+    });
+
+    if (!employee) {
+      throw new NotFoundException('Employee not found');
+    }
+
+    return employee;
   }
 
   async create(dto: CreateUserDto) {

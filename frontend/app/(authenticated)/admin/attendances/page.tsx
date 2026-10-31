@@ -23,6 +23,7 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
     timeStyle: "short",
+    hour12: false,
   }).format(new Date(value));
 }
 

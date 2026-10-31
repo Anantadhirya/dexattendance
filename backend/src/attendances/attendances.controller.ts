@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { AdminGuard } from '../auth/admin.guard.js';
@@ -20,8 +21,17 @@ export class AttendancesController {
   constructor(private readonly attendancesService: AttendancesService) {}
 
   @Get()
-  findAll() {
-    return this.attendancesService.findAll();
+  findAll(@Query('startDate') startDate?: string, @Query('endDate') endDate?: string) {
+    return this.attendancesService.findAll(startDate, endDate);
+  }
+
+  @Get('user/:userId')
+  findForUser(
+    @Param('userId') userId: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.attendancesService.findForUser(userId, startDate, endDate);
   }
 
   @Get(':id')

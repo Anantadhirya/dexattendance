@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { AttendanceType, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { CreateAttendanceDto } from './dto/create-attendance.dto.js';
@@ -19,6 +19,13 @@ const attendanceSelect = {
       id: true,
       name: true,
       email: true,
+      workSchedule: {
+        select: {
+          startTime: true,
+          endTime: true,
+          lateThreshold: true,
+        },
+      },
     },
   },
 } as const;
@@ -32,13 +39,36 @@ function serializeAttendance(attendance: {
   latitude: Prisma.Decimal | null;
   longitude: Prisma.Decimal | null;
   notes: string | null;
-  user: { id: string; name: string; email: string };
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    workSchedule: {
+      startTime: Date;
+      endTime: Date;
+      lateThreshold: number;
+    } | null;
+  };
 }) {
   return {
     ...attendance,
     timestamp: attendance.timestamp.toISOString(),
     latitude: attendance.latitude?.toString() ?? null,
     longitude: attendance.longitude?.toString() ?? null,
+    user: {
+      ...attendance.user,
+      workSchedule: attendance.user.workSchedule
+        ? {
+            ...attendance.user.workSchedule,
+            startTime: attendance.user.workSchedule.startTime
+              .toISOString()
+              .slice(11, 16),
+            endTime: attendance.user.workSchedule.endTime
+              .toISOString()
+              .slice(11, 16),
+          }
+        : null,
+    },
   };
 }
 
@@ -46,8 +76,9 @@ function serializeAttendance(attendance: {
 export class AttendancesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll() {
+  async findAll(startDate?: string, endDate?: string) {
     const records = await this.prisma.attendanceRecord.findMany({
+      where: this.dateRange(startDate, endDate),
       select: attendanceSelect,
       orderBy: { timestamp: 'desc' },
     });
@@ -108,6 +139,31 @@ export class AttendancesService {
     });
 
     return records.map(serializeAttendance);
+  }
+
+  async findForUser(userId: string, startDate?: string, endDate?: string) {
+    const records = await this.prisma.attendanceRecord.findMany({
+      where: { userId, ...this.dateRange(startDate, endDate) },
+      select: attendanceSelect,
+      orderBy: { timestamp: 'desc' },
+    });
+
+    return records.map(serializeAttendance);
+  }
+
+  private dateRange(startDate?: string, endDate?: string): Prisma.AttendanceRecordWhereInput {
+    if (!startDate && !endDate) return {};
+
+    const start = startDate ? new Date(startDate) : undefined;
+    const end = endDate ? new Date(endDate) : undefined;
+    if (
+      (startDate && (!start || Number.isNaN(start.getTime()))) ||
+      (endDate && (!end || Number.isNaN(end.getTime())))
+    ) {
+      throw new BadRequestException('Invalid attendance date range');
+    }
+
+    return { timestamp: { gte: start, lt: end } };
   }
 
   async createForUser(userId: string, dto: CreateSelfAttendanceDto) {

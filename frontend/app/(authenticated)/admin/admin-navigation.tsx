@@ -24,7 +24,7 @@ export default function AdminNavigation() {
             key={link.href}
             href={link.href}
             className={`block rounded-lg px-3 py-2 text-sm font-medium ${
-              pathname === link.href
+              pathname === link.href || pathname.startsWith(`${link.href}/`)
                 ? "bg-red-700 text-white"
                 : "text-zinc-600 hover:bg-red-50 hover:text-red-700"
             }`}
