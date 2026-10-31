@@ -8,6 +8,7 @@ import bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { CreateUserDto } from './dto/create-user.dto.js';
 import type { UpdateUserDto } from './dto/update-user.dto.js';
+import { WorkSchedulesService } from '../work-schedules/work-schedules.service.js';
 
 const userSelect = {
   id: true,
@@ -18,13 +19,22 @@ const userSelect = {
   createdAt: true,
   workScheduleId: true,
   workSchedule: {
-    select: { id: true, name: true },
+    select: {
+      id: true,
+      name: true,
+      startTime: true,
+      endTime: true,
+      lateThreshold: true,
+    },
   },
 } as const;
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly workSchedulesService: WorkSchedulesService,
+  ) {}
 
   async findAll(search?: string) {
     const normalizedSearch = search?.trim();
@@ -43,13 +53,6 @@ export class UsersService {
     });
   }
 
-  findSchedules() {
-    return this.prisma.workSchedule.findMany({
-      select: { id: true, name: true, startTime: true, endTime: true },
-      orderBy: { name: 'asc' },
-    });
-  }
-
   async create(dto: CreateUserDto) {
     const email = dto.email.trim().toLowerCase();
     const existing = await this.prisma.user.findUnique({ where: { email } });
@@ -60,6 +63,10 @@ export class UsersService {
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
 
+    if (dto.workScheduleId) {
+      await this.workSchedulesService.findOne(dto.workScheduleId);
+    }
+
     return this.prisma.user.create({
       data: {
         name: dto.name.trim(),
@@ -67,6 +74,7 @@ export class UsersService {
         passwordHash,
         isAdmin: false,
         isActive: dto.isActive ?? false,
+        workScheduleId: dto.workScheduleId,
       },
       select: userSelect,
     });
@@ -96,13 +104,7 @@ export class UsersService {
     }
 
     if (dto.workScheduleId) {
-      const schedule = await this.prisma.workSchedule.findUnique({
-        where: { id: dto.workScheduleId },
-      });
-
-      if (!schedule) {
-        throw new NotFoundException('Work schedule not found');
-      }
+      await this.workSchedulesService.findOne(dto.workScheduleId);
     }
 
     const passwordHash = dto.password

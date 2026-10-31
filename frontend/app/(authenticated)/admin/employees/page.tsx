@@ -14,6 +14,7 @@ type Schedule = {
   name: string;
   startTime: string;
   endTime: string;
+  lateThreshold: number;
 };
 
 type Employee = {
@@ -94,7 +95,7 @@ export default function EmployeesPage() {
     try {
       const [employeesResponse, schedulesResponse] = await Promise.all([
         fetch(`${apiUrl}/users`, { credentials: "include" }),
-        fetch(`${apiUrl}/users/work-schedules`, { credentials: "include" }),
+        fetch(`${apiUrl}/work-schedules`, { credentials: "include" }),
       ]);
 
       if (!employeesResponse.ok || !schedulesResponse.ok) {
@@ -276,6 +277,7 @@ export default function EmployeesPage() {
                 <tr>
                   <th className="px-3 py-3 font-semibold">Employee</th>
                   <th className="px-3 py-3 font-semibold">Status</th>
+                  <th className="px-3 py-3 font-semibold">Role</th>
                   <th className="px-3 py-3 font-semibold">Schedule</th>
                   <th className="px-3 py-3 text-right font-semibold">Actions</th>
                 </tr>
@@ -292,8 +294,27 @@ export default function EmployeesPage() {
                         {employee.isActive ? "Active" : "Inactive"}
                       </span>
                     </td>
-                    <td className="px-3 py-4 text-zinc-600">
-                      {employee.workSchedule?.name ?? "Not assigned"}
+                    <td className="px-3 py-4">
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                          employee.isAdmin
+                            ? "bg-red-50 text-red-700"
+                            : "bg-zinc-100 text-zinc-600"
+                        }`}
+                      >
+                        {employee.isAdmin ? "Administrator" : "Employee"}
+                      </span>
+                    </td>
+                    <td className="px-3 py-4">
+                      {employee.workSchedule ? (
+                        <span className="text-zinc-600">
+                          {employee.workSchedule.name}
+                        </span>
+                      ) : (
+                        <span className="italic text-zinc-400">
+                          Not assigned
+                        </span>
+                      )}
                     </td>
                     <td className="px-3 py-4 text-right">
                       <button

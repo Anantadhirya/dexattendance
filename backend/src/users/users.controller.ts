@@ -29,11 +29,6 @@ export class UsersController {
     return this.usersService.findAll(search);
   }
 
-  @Get('work-schedules')
-  findSchedules() {
-    return this.usersService.findSchedules();
-  }
-
   @Post()
   create(@Body() dto: CreateUserDto) {
     return this.usersService.create(dto);
