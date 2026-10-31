@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FiCamera, FiCheckCircle, FiClock, FiMapPin } from "react-icons/fi";
 import CameraDialog from "./camera-dialog";
+import LoadingOverlay from "./loading-overlay";
 import { useUser } from "./user-provider";
 
 type Attendance = {
@@ -188,11 +189,13 @@ export default function DashboardPage() {
             <FiClock className="text-3xl text-red-200" aria-hidden="true" />
             <p className="mt-3 text-sm text-red-100">Current status</p>
             <p className="mt-1 text-xl font-semibold">
-              {checkOut
-                ? "Day completed"
-                : checkIn
-                  ? "Currently working"
-                  : "Not checked in"}
+              {isLoading
+                ? "Loading..."
+                : checkOut
+                  ? "Day completed"
+                  : checkIn
+                    ? "Currently working"
+                    : "Not checked in"}
             </p>
           </div>
         </div>
@@ -207,7 +210,8 @@ export default function DashboardPage() {
         </p>
       )}
 
-      <div className="mt-7 grid gap-6 md:grid-cols-[1.3fr_0.7fr]">
+      <div className="relative mt-7 grid gap-6 md:grid-cols-[1.3fr_0.7fr]">
+        {isLoading && <LoadingOverlay label="Loading today’s attendance" />}
         <section className="rounded-3xl border border-red-100 bg-white p-6 shadow-sm sm:p-8">
           <div className="flex items-center justify-between gap-4">
             <div>

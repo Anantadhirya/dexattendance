@@ -104,6 +104,7 @@ export default function AttendanceHistory({
   });
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [records, setRecords] = useState<AttendanceHistoryRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
   const days = useMemo(() => {
@@ -118,6 +119,7 @@ export default function AttendanceHistory({
   }, [month]);
 
   const loadRecords = useCallback(async () => {
+    setIsLoading(true);
     const startDate = new Date(days[0]);
     startDate.setHours(0, 0, 0, 0);
     const endDate = new Date(days[days.length - 1]);
@@ -140,6 +142,8 @@ export default function AttendanceHistory({
           ? requestError.message
           : "Unable to load attendance",
       );
+    } finally {
+      setIsLoading(false);
     }
   }, [days, endpoint]);
 
@@ -193,7 +197,16 @@ export default function AttendanceHistory({
       )}
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
-        <section className="rounded-3xl border border-red-100 bg-white p-5 shadow-sm sm:p-7">
+        <section className="relative rounded-3xl border border-red-100 bg-white p-5 shadow-sm sm:p-7">
+          {isLoading && (
+            <div
+              className="absolute inset-0 z-10 flex items-center justify-center rounded-3xl bg-white/70"
+              role="status"
+              aria-label="Loading attendance"
+            >
+              <span className="h-10 w-10 animate-spin rounded-full border-4 border-red-100 border-t-red-700" />
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <button
               type="button"
