@@ -5,10 +5,7 @@
       "framework": "nextjs"
     },
     "api": {
-      "root": "backend/",
-      "framework": "nestjs",
-      "installCommand": "npm install",
-      "buildCommand": "npm run build"
+      "root": "backend/"
     }
   },
   "rewrites": [
