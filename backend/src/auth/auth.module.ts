@@ -5,6 +5,7 @@ import { AuthController } from './auth.controller.js';
 import { AuthGuard } from './auth.guard.js';
 import { AuthService } from './auth.service.js';
 import { AdminGuard } from './admin.guard.js';
+import { ActiveGuard } from './active.guard.js';
 
 @Module({
   imports: [
@@ -19,7 +20,7 @@ import { AdminGuard } from './admin.guard.js';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, AuthGuard, AdminGuard],
-  exports: [AuthService, AuthGuard, AdminGuard, JwtModule],
+  providers: [AuthService, AuthGuard, ActiveGuard, AdminGuard],
+  exports: [AuthService, AuthGuard, ActiveGuard, AdminGuard, JwtModule],
 })
 export class AuthModule {}

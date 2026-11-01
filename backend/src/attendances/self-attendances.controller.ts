@@ -1,13 +1,14 @@
 import { Body, Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 import { AuthGuard } from '../auth/auth.guard.js';
+import { ActiveGuard } from '../auth/active.guard.js';
 import { CreateSelfAttendanceDto } from './dto/create-self-attendance.dto.js';
 import { AttendancesService } from './attendances.service.js';
 
 type AuthenticatedRequest = Request & { userId: string };
 
 @Controller('my-attendances')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, ActiveGuard)
 export class SelfAttendancesController {
   constructor(private readonly attendancesService: AttendancesService) {}
 
