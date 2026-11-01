@@ -6,7 +6,8 @@
     },
     "api": {
       "root": "backend/",
-      "framework": "nestjs"
+      "framework": "nestjs",
+      "outputDirectory": "."
     }
   },
   "rewrites": [
