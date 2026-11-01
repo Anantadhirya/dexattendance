@@ -1,10 +1,12 @@
 {
   "services": {
     "frontend": {
-      "root": "frontend/"
+      "root": "frontend/",
+      "framework": "nextjs"
     },
     "api": {
-      "root": "backend/"
+      "root": "backend/",
+      "framework": "nestjs"
     }
   },
   "rewrites": [
