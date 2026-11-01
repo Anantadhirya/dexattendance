@@ -42,6 +42,19 @@ export class AttendancesController {
     );
   }
 
+  @Get('dashboard')
+  findDashboardData(
+    @Query('date') date?: string,
+    @Query('timezoneOffsetMinutes') timezoneOffsetValue?: string,
+  ) {
+    const timezoneOffsetMinutes =
+      Number.parseInt(timezoneOffsetValue ?? '0', 10) || 0;
+    return this.attendancesService.findDashboardData(
+      date,
+      timezoneOffsetMinutes,
+    );
+  }
+
   @Get('user/:userId')
   findForUser(
     @Param('userId') userId: string,

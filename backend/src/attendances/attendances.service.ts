@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { AttendanceType, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { CreateAttendanceDto } from './dto/create-attendance.dto.js';
@@ -116,6 +120,85 @@ export class AttendancesService {
     };
   }
 
+  async findDashboardData(date?: string, timezoneOffsetMinutes = 0) {
+    const now = new Date();
+    const localNow = new Date(
+      now.getTime() - timezoneOffsetMinutes * 60 * 1000,
+    );
+    const selectedDate = date ?? localNow.toISOString().slice(0, 10);
+    const isToday = selectedDate === localNow.toISOString().slice(0, 10);
+    const [year, month, day] = selectedDate.split('-').map(Number);
+    const start = new Date(
+      Date.UTC(year, month - 1, day) + timezoneOffsetMinutes * 60 * 1000,
+    );
+    const end = new Date(start);
+    end.setUTCDate(end.getUTCDate() + 1);
+
+    const users = await this.prisma.user.findMany({
+      where: {
+        isActive: true,
+        workSchedule: isToday
+          ? {
+              is: {
+                startTime: {
+                  lte: new Date(
+                    Date.UTC(
+                      1970,
+                      0,
+                      1,
+                      localNow.getUTCHours(),
+                      localNow.getUTCMinutes(),
+                      localNow.getUTCSeconds(),
+                    ),
+                  ),
+                },
+              },
+            }
+          : { isNot: null },
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        workSchedule: {
+          select: {
+            name: true,
+            startTime: true,
+            endTime: true,
+            lateThreshold: true,
+          },
+        },
+      },
+      orderBy: { name: 'asc' },
+    });
+
+    const eligibleIds = users.map((user) => user.id);
+    const records = await this.prisma.attendanceRecord.findMany({
+      where: {
+        userId: { in: eligibleIds },
+        timestamp: { gte: start, lt: end },
+      },
+      select: attendanceSelect,
+      orderBy: { timestamp: 'asc' },
+    });
+
+    return {
+      users: users.map((user) => ({
+        ...user,
+        workSchedule: user.workSchedule
+          ? {
+              ...user.workSchedule,
+              startTime: user.workSchedule.startTime
+                .toISOString()
+                .slice(11, 16),
+              endTime: user.workSchedule.endTime.toISOString().slice(11, 16),
+            }
+          : null,
+      })),
+      attendances: records.map(serializeAttendance),
+    };
+  }
+
   async findOne(id: string) {
     const record = await this.prisma.attendanceRecord.findUnique({
       where: { id },
@@ -157,7 +240,8 @@ export class AttendancesService {
         localNow.getUTCFullYear(),
         localNow.getUTCMonth(),
         localNow.getUTCDate(),
-      ) + timezoneOffsetMinutes * 60 * 1000,
+      ) +
+        timezoneOffsetMinutes * 60 * 1000,
     );
     const end = new Date(start);
     end.setDate(end.getDate() + 1);
@@ -181,7 +265,10 @@ export class AttendancesService {
     return records.map(serializeAttendance);
   }
 
-  private dateRange(startDate?: string, endDate?: string): Prisma.AttendanceRecordWhereInput {
+  private dateRange(
+    startDate?: string,
+    endDate?: string,
+  ): Prisma.AttendanceRecordWhereInput {
     if (!startDate && !endDate) return {};
 
     const start = startDate ? new Date(startDate) : undefined;
