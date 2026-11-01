@@ -28,6 +28,15 @@ export default function SignInPage() {
     if (isSignIn) {
       payload.rememberMe = formData.get("remember") === "on";
       delete payload.remember;
+    } else {
+      const password = formData.get("password");
+      const confirmPassword = formData.get("confirmPassword");
+      if (password !== confirmPassword) {
+        setError("Passwords do not match");
+        setIsSubmitting(false);
+        return;
+      }
+      delete payload.confirmPassword;
     }
     const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
@@ -79,19 +88,15 @@ export default function SignInPage() {
                 dexattendance
               </span>
             </div>
-            <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-red-200">
-              Attendance, simplified
-            </p>
             <h1 className="max-w-sm text-4xl font-semibold leading-tight tracking-tight">
-              Make every workday count.
+              Welcome to dexattendance
             </h1>
             <p className="mt-5 max-w-sm leading-7 text-red-100">
-              Keep your team&apos;s attendance organized, accurate, and easy to
-              manage.
+              Manage your attendance easily.
             </p>
           </div>
           <p className="text-sm text-red-200">
-            Simple tools for better workdays.
+            Built by Daniel Anantadhirya Adyawisesa Linan
           </p>
         </div>
 
@@ -187,6 +192,22 @@ export default function SignInPage() {
                 className="h-12 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 text-sm text-zinc-950 outline-none transition placeholder:text-zinc-400 focus:border-red-500 focus:bg-white focus:ring-4 focus:ring-red-100"
               />
             </label>
+
+            {!isSignIn && (
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-zinc-700">
+                Confirm password
+              </span>
+              <input
+                type="password"
+                name="confirmPassword"
+                placeholder="Re-enter your password"
+                autoComplete="new-password"
+                required
+                className="h-12 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 text-sm text-zinc-950 outline-none transition placeholder:text-zinc-400 focus:border-red-500 focus:bg-white focus:ring-4 focus:ring-red-100"
+              />
+            </label>
+            )}
 
             {isSignIn && (
               <div className="flex items-center justify-between text-sm">

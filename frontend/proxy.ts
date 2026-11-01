@@ -3,16 +3,19 @@ import type { NextRequest } from "next/server";
 
 export function proxy(request: NextRequest) {
   const hasSession = request.cookies.has("dexattendance_token");
-  const isUnauthenticatedRoute = request.nextUrl.pathname.startsWith("/sign-in");
+  const isSignInRoute = request.nextUrl.pathname.startsWith("/sign-in");
+  const isPublicRoute =
+    isSignInRoute ||
+    request.nextUrl.pathname.startsWith("/account-inactive");
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-pathname", request.nextUrl.pathname);
 
-  if (isUnauthenticatedRoute && hasSession) {
+  if (isSignInRoute && hasSession) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  if (!isUnauthenticatedRoute && !hasSession) {
+  if (!isPublicRoute && !hasSession) {
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
 

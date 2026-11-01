@@ -60,18 +60,14 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    if (!user.isActive) {
-      throw new UnauthorizedException('This account is inactive');
-    }
-
     return this.createAuthResponse(user);
   }
 
   async getPublicUser(id: string) {
     const user = await this.prisma.user.findUnique({ where: { id } });
 
-    if (!user || !user.isActive) {
-      throw new UnauthorizedException('This account is inactive');
+    if (!user) {
+      throw new UnauthorizedException('Account not found');
     }
 
     return this.toPublicUser(user);

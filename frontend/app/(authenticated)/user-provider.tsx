@@ -4,6 +4,7 @@ import { createContext, useContext } from "react";
 
 export type CurrentUser = {
   isAdmin: boolean;
+  isActive: boolean;
   name: string;
   email: string;
 };
