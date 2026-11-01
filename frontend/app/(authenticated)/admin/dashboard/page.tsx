@@ -93,8 +93,8 @@ export default function AdminDashboardPage() {
     () =>
       makeChart([
         ["missing", "Missing"],
-        ["checked_in", "Checked in"],
-        ["checked_out", "Checked out"],
+        ["checked_in", "Clocked in"],
+        ["checked_out", "Clocked out"],
       ], userStatuses.map((item) => item.attendance)),
     [userStatuses],
   );

@@ -236,8 +236,8 @@ export default function AttendanceDetailPage() {
               }
               className="h-11 w-full rounded-xl border border-zinc-200 bg-white px-4 text-sm text-zinc-950 outline-none focus:border-red-500 focus:ring-4 focus:ring-red-100"
             >
-              <option value="check_in">Check in</option>
-              <option value="check_out">Check out</option>
+              <option value="check_in">Clock in</option>
+              <option value="check_out">Clock out</option>
             </select>
             <input
               required

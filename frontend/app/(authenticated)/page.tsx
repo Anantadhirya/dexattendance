@@ -122,9 +122,9 @@ export default function DashboardPage() {
   const action = !checkIn ? "check_in" : !checkOut ? "check_out" : null;
   const actionLabel =
     action === "check_in"
-      ? "Check in now"
+      ? "Clock in now"
       : action === "check_out"
-        ? "Check out now"
+        ? "Clock out now"
         : "Attendance complete";
 
   const todayLabel = useMemo(
@@ -197,7 +197,7 @@ export default function DashboardPage() {
                   ? "Day completed"
                   : checkIn
                     ? "Currently working"
-                    : "Not checked in"}
+                    : "Not clocked in"}
             </p>
           </div>
         </div>
@@ -228,7 +228,7 @@ export default function DashboardPage() {
           </div>
           <div className="mt-8 grid gap-4 grid-cols-2">
             <div className="rounded-2xl bg-green-50 p-5">
-              <p className="text-sm font-medium text-green-700">Check in</p>
+              <p className="text-sm font-medium text-green-700">Clock in</p>
               <p className="mt-2 text-3xl font-semibold text-green-950">
                 {isLoading ? "--:--" : formatTime(checkIn?.timestamp)}
               </p>
@@ -237,7 +237,7 @@ export default function DashboardPage() {
               </p>
             </div>
             <div className="rounded-2xl bg-blue-50 p-5">
-              <p className="text-sm font-medium text-blue-700">Check out</p>
+              <p className="text-sm font-medium text-blue-700">Clock out</p>
               <p className="mt-2 text-3xl font-semibold text-blue-950">
                 {isLoading ? "--:--" : formatTime(checkOut?.timestamp)}
               </p>
@@ -301,9 +301,9 @@ export default function DashboardPage() {
       )}
       {isConfirmationOpen && action && (
         <ConfirmationDialog
-          title={`${action === "check_in" ? "Check in" : "Check out"} now?`}
-          message={`Confirm that you want to ${action === "check_in" ? "check in" : "check out"} now. Your current location will be captured.`}
-          confirmLabel={action === "check_in" ? "Check in" : "Check out"}
+          title={`${action === "check_in" ? "Clock in" : "Clock out"} now?`}
+          message={`Confirm that you want to ${action === "check_in" ? "clock in" : "clock out"} now. Your current location will be captured.`}
+          confirmLabel={action === "check_in" ? "Clock in" : "Clock out"}
           onCancel={() => setIsConfirmationOpen(false)}
           onConfirm={() => {
             setIsConfirmationOpen(false);

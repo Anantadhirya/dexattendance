@@ -61,7 +61,7 @@ export default function DashboardDetailsPanel({
                         : "bg-blue-100 text-blue-700"
                     }`}
                   >
-                    {record.type === "check_in" ? "Check in" : "Check out"}
+                    {record.type === "check_in" ? "Clock in" : "Clock out"}
                   </span>
                 </div>
                 <p className="mt-3 font-semibold text-red-950">
@@ -93,7 +93,7 @@ function StatusEmployee({
     >
       <p className="font-semibold text-red-950">{item.user.name}</p>
       {selection.status === "missing" ? (
-        <p className="mt-3 text-sm text-zinc-500">No check in</p>
+        <p className="mt-3 text-sm text-zinc-500">No clock in</p>
       ) : selection.status === "checked_out" ? (
         <div className="mt-3 flex items-center gap-2 text-sm">
           <span className="rounded-full bg-blue-100 px-3 py-1 font-semibold text-blue-700">

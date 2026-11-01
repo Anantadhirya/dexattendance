@@ -303,7 +303,7 @@ export default function AttendanceHistory({
                       className="flex items-center justify-between rounded-2xl bg-zinc-50 p-4"
                     >
                       <span className="font-medium text-zinc-700">
-                        {type === "check_in" ? "Check in" : "Check out"}
+                        {type === "check_in" ? "Clock in" : "Clock out"}
                       </span>
                       <span className="flex items-center gap-2 font-semibold text-red-950">
                         <FiClock aria-hidden="true" />

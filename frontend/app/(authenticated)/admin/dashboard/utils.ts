@@ -52,7 +52,15 @@ export function formatDate(value: string) {
 }
 
 export function statusLabel(status: string) {
-  return status.replace("_", " ");
+  return (
+    {
+      checked_in: "clocked in",
+      checked_out: "clocked out",
+      on_time: "on time",
+      late: "late",
+      missing: "missing",
+    }[status] ?? status.replace("_", " ")
+  );
 }
 
 export function formatMinute(minute: number) {
