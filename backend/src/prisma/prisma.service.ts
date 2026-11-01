@@ -4,8 +4,10 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 
 @Injectable()
-// implements OnModuleInit, OnModuleDestroy
-export class PrismaService extends PrismaClient implements OnModuleInit {
+export class PrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
   constructor(configService: ConfigService) {
     const databaseUrl = configService.getOrThrow<string>('DATABASE_URL');
 
@@ -18,7 +20,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     await this.$connect();
   }
 
-  // async onModuleDestroy() {
-  //   await this.$disconnect();
-  // }
+  async onModuleDestroy() {
+    await this.$disconnect();
+  }
 }

@@ -246,17 +246,11 @@ export class AttendancesService {
     const end = new Date(start);
     end.setDate(end.getDate() + 1);
 
-    const start_timer = performance.now();
-
     const records = await this.prisma.attendanceRecord.findMany({
       where: { userId, timestamp: { gte: start, lt: end } },
       select: attendanceSelect,
       orderBy: { timestamp: 'asc' },
     });
-
-    console.log(
-      `Attendance query: ${(performance.now() - start_timer).toFixed(2)}ms`,
-    );
 
     return records.map(serializeAttendance);
   }
